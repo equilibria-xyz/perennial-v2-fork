@@ -100,6 +100,8 @@ interface IMarket is IInstance {
     error MarketInvalidMarketParameterError(uint256 code);
     // sig: 0xc5f0e98a
     error MarketInvalidRiskParameterError(uint256 code);
+    // sig: 0x5c5cb438
+    error MarketSettleOnlyError();
 
     // sig: 0x2142bc27
     error GlobalStorageInvalidError();

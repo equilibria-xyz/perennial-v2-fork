@@ -93,7 +93,7 @@ contract Market is IMarket, Instance, ReentrancyGuard {
         Context memory context = _loadContext(account);
 
         _settle(context, account);
-        
+
         _storeContext(context, account);
     }
 
@@ -116,7 +116,7 @@ contract Market is IMarket, Instance, ReentrancyGuard {
 
         _settle(context, account);
         _update(context, account, newMaker, newLong, newShort, collateral, protect);
-        
+
         _storeContext(context, account);
     }
 
@@ -156,8 +156,8 @@ contract Market is IMarket, Instance, ReentrancyGuard {
 
         newGlobal.exposure = newGlobal.exposure.sub(updateFee);
         _global.store(newGlobal);
-        
-        // update 
+
+        // update
         _riskParameter.validateAndStore(newRiskParameter, IMarketFactory(address(factory())).parameter());
         emit RiskParameterUpdated(newRiskParameter);
     }
@@ -186,7 +186,7 @@ contract Market is IMarket, Instance, ReentrancyGuard {
 
         if (newGlobal.exposure.sign() == 1) token.push(msg.sender, UFixed18Lib.from(newGlobal.exposure.abs()));
         if (newGlobal.exposure.sign() == -1) token.pull(msg.sender, UFixed18Lib.from(newGlobal.exposure.abs()));
-        
+
         emit ExposureClaimed(msg.sender, newGlobal.exposure);
 
         newGlobal.exposure = Fixed6Lib.ZERO;
@@ -365,7 +365,7 @@ contract Market is IMarket, Instance, ReentrancyGuard {
         UFixed6 newShort,
         Fixed6 collateral,
         bool protect
-    ) private {
+    ) private notSettleOnly(context) {
         // load
         UpdateContext memory updateContext = _loadUpdateContext(context, account);
 
@@ -518,7 +518,7 @@ contract Market is IMarket, Instance, ReentrancyGuard {
         Order memory newOrder
     ) private {
         OracleVersion memory oracleVersion = oracle.at(newOrder.timestamp);
-        
+
         (uint256 fromTimestamp, uint256 fromId) = (context.latestPosition.global.timestamp, context.global.latestId);
         (
             VersionAccumulationResult memory accumulationResult,
@@ -700,6 +700,11 @@ contract Market is IMarket, Instance, ReentrancyGuard {
     /// @notice Only the coordinator or the owner can call
     modifier onlyCoordinator {
         if (msg.sender != coordinator && msg.sender != factory().owner()) revert MarketNotCoordinatorError();
+        _;
+    }
+
+    modifier notSettleOnly(Context memory context) {
+        if (context.marketParameter.settle) revert MarketSettleOnlyError();
         _;
     }
 }
